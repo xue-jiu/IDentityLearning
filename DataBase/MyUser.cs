@@ -9,6 +9,6 @@ namespace IDentityLearning.DataBase
 {
     public class MyUser:IdentityUser<Guid>
     {
-        public string? MyPreference { get; set; }
+        public string MyPreference { get; set; }
     }
 }

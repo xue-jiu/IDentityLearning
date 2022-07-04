@@ -1,4 +1,6 @@
 using IDentityLearning.DataBase;
+using IDentityLearning.JwtModel;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -7,9 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace IDentityLearning
@@ -27,12 +31,13 @@ namespace IDentityLearning
         {
             services.AddControllers();
             //Dbcontext注入
-            services.AddDbContext<MyDbContext>(opt=> 
+            services.AddDbContext<MyDbContext>(opt =>
             {
-                opt.UseSqlServer(_confirguration["DbContext:ConnectionString"]);
+                opt.UseSqlServer(_confirguration["DbContext:ConnectionString"]);//得到的是string
             });
             services.AddDataProtection();
-            //用于配置标识服务的 Helper 函数   盲猜 IdentityBuilder时Service中的一个属性,或者Identity时Service中的一个属性,用Identity来生成
+            //Identity
+            //用于配置标识服务的 Helper 函数  盲猜IdentityBuilder调用了services中的函数/盲猜 IdentityBuilder时Service中的一个属性,或者Identity时Service中的一个属性,用Identity来生成
             //var IdentityBuilder = new IdentityBuilder(typeof(MyUser), typeof(MyRole), services);
             services.AddIdentityCore<MyUser>(opt => //与AddIdentity不同,AddIdentity还会添加默认界面
             {
@@ -48,8 +53,27 @@ namespace IDentityLearning
             .AddRoles<MyRole>()
             .AddEntityFrameworkStores<MyDbContext>()
             .AddDefaultTokenProviders()
-            //.AddRoleManager<RoleManager<MyRole>>()
+            //.AddRoleManager<RoleManager<MyRole>>()//AddRoles包含了RoleManager
             .AddUserManager<UserManager<MyUser>>();
+            //Jwt
+           //services.Configure<JwtSettings>(_confirguration.GetSection("Jwt"));//注入JwtSettings
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+               //var JwtSettings=_confirguration.GetSection("Jwt").Get<JwtSettings>();
+                //_confirguration["Jwt:SecretKey"]就可以用JwtSettings.SecretKey代替
+                var secretByte = Encoding.UTF8.GetBytes(_confirguration["Jwt:SecretKey"]);
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = _confirguration["Jwt:Issuer"],//也可以写成_confirguration
+                    ValidateAudience = true,
+                    ValidAudience = _confirguration["Jwt:Audience"],
+                    ValidateLifetime = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(secretByte)
+                };
+            });
+
 
         }
 
@@ -61,7 +85,8 @@ namespace IDentityLearning
                 app.UseDeveloperExceptionPage();
             }
             app.UseRouting();
-
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
