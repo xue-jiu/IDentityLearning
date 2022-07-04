@@ -1,6 +1,8 @@
 ﻿using IDentityLearning.DataBase;
+using IDentityLearning.JwtModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,12 +14,13 @@ namespace IDentityLearning.Controllers
     [ApiController]
     public class MyUserController : ControllerBase
     {
-
+        IOptionsSnapshot<JwtSettings> _jwtSettings;
         private readonly UserManager<MyUser> _userManager;
         private readonly RoleManager<MyRole> _roleManager;
         IRoleStore<MyRole> _roleStore;
-        public MyUserController(UserManager<MyUser> userManager, RoleManager<MyRole> roleManager, IRoleStore<MyRole> roleStore)
+        public MyUserController(UserManager<MyUser> userManager, RoleManager<MyRole> roleManager, IRoleStore<MyRole> roleStore, IOptionsSnapshot<JwtSettings> jwtSettings)//JwtSettings jwtSettings
         {
+           _jwtSettings = jwtSettings;
             _userManager = userManager;
             _roleManager = roleManager;
             _roleStore = roleStore;//里面的方法都需要token
@@ -26,7 +29,7 @@ namespace IDentityLearning.Controllers
         public IActionResult ShowControllerExist()
         {
             MyRole myNewRole = new MyRole { Name = "NoAdmin" };
-            return Ok("Controller存在");
+            return Ok(_jwtSettings);
         }
 
 

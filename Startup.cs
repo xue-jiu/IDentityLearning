@@ -55,14 +55,16 @@ namespace IDentityLearning
             .AddDefaultTokenProviders()
             //.AddRoleManager<RoleManager<MyRole>>()//AddRoles包含了RoleManager
             .AddUserManager<UserManager<MyUser>>();
+
+
             //Jwt
-           //services.Configure<JwtSettings>(_confirguration.GetSection("Jwt"));//注入JwtSettings
+            services.AddOptions().Configure<JwtSettings>(_confirguration.GetSection("Jwt"));
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                //var JwtSettings=_confirguration.GetSection("Jwt").Get<JwtSettings>();
                 //_confirguration["Jwt:SecretKey"]就可以用JwtSettings.SecretKey代替
-                var secretByte = Encoding.UTF8.GetBytes(_confirguration["Jwt:SecretKey"]);
+                var secretByte = Encoding.UTF8.GetBytes(_confirguration["Jwt:ScrKey"]);
                 options.TokenValidationParameters = new TokenValidationParameters()
                 {
                     ValidateIssuer = true,
@@ -73,8 +75,6 @@ namespace IDentityLearning
                     IssuerSigningKey = new SymmetricSecurityKey(secretByte)
                 };
             });
-
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
